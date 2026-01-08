@@ -1,0 +1,76 @@
+version: '3'
+
+vars:
+  INFRA_DIR: ./infra
+
+dotenv: ['.env', 'app.env']
+
+tasks:
+  data:init:
+    desc: Initialize the project by installing dependencies
+    cmds:
+      - pip install python-dateutil
+      - pip install kaggle
+
+  data:download:
+    desc: Download the kaggle dataset
+    cmds:
+      - bash ./download_data.sh
+    dir: ./data
+
+  infra:init:
+    desc: Initialize Terraform
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform init
+
+  infra:validate:
+    desc: Validate Terraform configuration
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform validate
+
+  infra:plan:
+    desc: Plan Terraform changes
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform plan -out=tfplan
+
+  infra:apply:
+    desc: Apply Terraform changes
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform apply tfplan
+
+  infra:deploy:
+    desc: Deploy infrastructure with Terraform (init, plan, and apply)
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform init -upgrade
+      - terraform validate
+      - terraform plan -out=tfplan
+      - terraform apply -auto-approve tfplan
+      - terraform output -json | jq -r 'to_entries | map("\(.key | ascii_upcase)=\(.value.value)") | .[]' > ../app.env
+
+  infra:destroy:
+    desc: Destroy all Terraform-managed infrastructure
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform destroy
+
+  infra:output:
+    desc: Show Terraform outputs
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform output
+
+  infra:fmt:
+    desc: Format Terraform files
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - terraform fmt -recursive
+
+  ingest:colours:
+    desc: Ingest colour groups from articles.csv to Event Hub
+    cmds:
+      - uv run python -m src.ingest.ingest_products
