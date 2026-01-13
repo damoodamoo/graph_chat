@@ -7,7 +7,7 @@ from azure.eventhub import EventHubConsumerClient
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 
-from src.models.events import GraphEdgeEvent, GraphNodeEvent
+from src.ingestion.models.events import GraphEdgeEvent, GraphNodeEvent
 
 
 class LocalCheckpointStore:
@@ -74,6 +74,7 @@ class EventHubConsumerService:
         self._checkpoint_store = checkpoint_store or LocalCheckpointStore()
         self._on_node_event: Callable[[GraphNodeEvent], None] | None = None
         self._on_edge_event: Callable[[GraphEdgeEvent], None] | None = None
+        self._on_batch_complete: Callable[[], None] | None = None
 
     @property
     def consumer(self) -> EventHubConsumerClient:
@@ -118,6 +119,23 @@ class EventHubConsumerService:
             Self for method chaining
         """
         self._on_edge_event = handler
+        return self
+
+    def set_batch_complete_handler(
+        self, handler: Callable[[], None]
+    ) -> "EventHubConsumerService":
+        """
+        Set the handler called after processing each Event Hub batch.
+
+        This is useful for flushing accumulated data after each batch.
+
+        Args:
+            handler: Callback function called when a batch is complete
+
+        Returns:
+            Self for method chaining
+        """
+        self._on_batch_complete = handler
         return self
 
     def _process_event(self, partition_context, event) -> None:
@@ -258,6 +276,10 @@ class EventHubConsumerService:
             for event in events:
                 self._process_event(partition_context, event)
                 last_event = event
+
+            # Call batch complete handler to flush any accumulated data
+            if self._on_batch_complete:
+                self._on_batch_complete()
 
             # Checkpoint after processing batch using local store
             if last_event:

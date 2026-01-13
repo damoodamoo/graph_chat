@@ -1,8 +1,8 @@
 import argparse
 
-from src.ingest.ingest_article_nodes import ingest_article_nodes
-from src.ingest.ingest_customer_nodes import ingest_customer_nodes
-from src.ingest.ingest_edges import ingest_all_edges
+from src.ingestion.ingest.ingest_article_nodes import ingest_article_nodes
+from src.ingestion.ingest.ingest_customer_nodes import ingest_customer_nodes
+from src.ingestion.ingest.ingest_edges import ingest_all_edges
 
 
 if __name__ == "__main__":

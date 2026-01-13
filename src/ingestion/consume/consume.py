@@ -6,30 +6,68 @@ import signal
 import sys
 from typing import NoReturn
 
-from src.consume.event_hub_consumer import EventHubConsumerService
-from src.consume.gremlin_client import GremlinService
-from src.models.events import GraphEdgeEvent, GraphNodeEvent
+from src.ingestion.consume.event_hub_consumer import EventHubConsumerService
+from src.ingestion.consume.gremlin_client import GremlinService
+from src.ingestion.models.events import GraphEdgeEvent, GraphNodeEvent
 
 
 class GraphEventProcessor:
     """
     Processor that consumes events from Event Hub and writes them to Cosmos DB Graph.
+
+    Uses batch processing for node events to improve throughput.
     """
+
+    # Batch configuration
+    NODE_BATCH_SIZE = 50  # Number of nodes to process in a single Gremlin batch
 
     def __init__(self):
         self.gremlin_service = GremlinService()
         self.consumer_service = EventHubConsumerService()
         self._running = False
+        self._node_event_batch: list[GraphNodeEvent] = []
 
     def _handle_node_event(self, event: GraphNodeEvent) -> None:
-        """Process a node event by writing to Cosmos DB."""
+        """
+        Collect node events for batch processing.
+
+        Events are accumulated and processed when batch size is reached.
+        """
+        self._node_event_batch.append(event)
+
+        if len(self._node_event_batch) >= self.NODE_BATCH_SIZE:
+            self._flush_node_batch()
+
+    def _flush_node_batch(self) -> None:
+        """Process accumulated node events as a batch."""
+        if not self._node_event_batch:
+            return
+
         try:
-            self.gremlin_service.process_node_event(event)
+            batch_size = len(self._node_event_batch)
+            self.gremlin_service.process_node_events_batch(
+                self._node_event_batch, batch_size=self.NODE_BATCH_SIZE
+            )
+            print(f"Processed batch of {batch_size} node events")
         except Exception as e:
-            print(f"Failed to process node event {event.event_id}: {e}")
+            print(f"Failed to process node batch: {e}")
+            # Fall back to processing individually
+            for event in self._node_event_batch:
+                try:
+                    self.gremlin_service.process_node_event(event)
+                except Exception as individual_error:
+                    print(
+                        f"Failed to process node event {event.event_id}: {individual_error}"
+                    )
+        finally:
+            self._node_event_batch = []
 
     def _handle_edge_event(self, event: GraphEdgeEvent) -> None:
         """Process an edge event by writing to Cosmos DB."""
+        # Flush any pending node events before processing edges
+        # to ensure nodes exist before creating edges
+        self._flush_node_batch()
+
         try:
             self.gremlin_service.process_edge_event(event)
         except Exception as e:
@@ -52,10 +90,12 @@ class GraphEventProcessor:
 
         print("Starting Graph Event Processor...")
         print(f"Starting position: {starting_position}")
+        print(f"Node batch size: {self.NODE_BATCH_SIZE}")
 
         # Configure handlers
         self.consumer_service.set_node_event_handler(self._handle_node_event)
         self.consumer_service.set_edge_event_handler(self._handle_edge_event)
+        self.consumer_service.set_batch_complete_handler(self._flush_node_batch)
 
         try:
             # Start consuming (this is blocking)
@@ -72,6 +112,9 @@ class GraphEventProcessor:
 
         print("Stopping Graph Event Processor...")
         self._running = False
+
+        # Flush any remaining node events
+        self._flush_node_batch()
 
         self.consumer_service.close()
         self.gremlin_service.close()

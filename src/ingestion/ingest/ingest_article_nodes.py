@@ -2,9 +2,9 @@ from uuid import uuid4
 
 import pandas as pd
 
-from src.ingest.csv_loader import CsvLoader
-from src.ingest.event_hub_producer import EventHubService
-from src.models.events import Action, GraphNodeEvent, NodeType
+from src.ingestion.ingest.csv_loader import CsvLoader
+from src.ingestion.ingest.event_hub_producer import EventHubService
+from src.ingestion.models.events import Action, GraphNodeEvent, NodeType
 
 
 def ingest_unique_field_values(

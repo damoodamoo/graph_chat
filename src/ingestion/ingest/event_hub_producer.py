@@ -5,7 +5,7 @@ from azure.eventhub import EventData, EventHubProducerClient
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 
-from src.models.events import GraphEdgeEvent, GraphNodeEvent
+from src.ingestion.models.events import GraphEdgeEvent, GraphNodeEvent
 
 
 class EventHubService:

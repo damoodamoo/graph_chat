@@ -2,9 +2,9 @@ from uuid import uuid4
 
 import pandas as pd
 
-from src.ingest.csv_loader import CsvLoader
-from src.ingest.event_hub_producer import EventHubService
-from src.models.events import Action, EdgeType, GraphEdgeEvent, NodeType
+from src.ingestion.ingest.csv_loader import CsvLoader
+from src.ingestion.ingest.event_hub_producer import EventHubService
+from src.ingestion.models.events import Action, EdgeType, GraphEdgeEvent, NodeType
 
 ARTICLES_CSV = "data/articles.csv"
 TRANSACTIONS_CSV = "data/transactions_train.csv"
@@ -103,54 +103,54 @@ def ingest_all_edges(max_rows: int | None = None) -> None:
     """
     
     # product_type_name -> product_group_name
-    # ingest_edges(
-    #     source_field="product_type_name",
-    #     target_field="product_group_name",
-    #     edge_type=EdgeType.BELONGS_TO,
-    #     source_node_type=NodeType.PRODUCT_TYPE,
-    #     target_node_type=NodeType.PRODUCT_GROUP,
-    #     max_rows=max_rows,
-    # )
+    ingest_edges(
+        source_field="product_type_name",
+        target_field="product_group_name",
+        edge_type=EdgeType.BELONGS_TO,
+        source_node_type=NodeType.PRODUCT_TYPE,
+        target_node_type=NodeType.PRODUCT_GROUP,
+        max_rows=max_rows,
+    )
 
-    # # product_name -> product_type_name
-    # ingest_edges(
-    #     source_field="prod_name",
-    #     target_field="product_type_name",
-    #     edge_type=EdgeType.BELONGS_TO,
-    #     source_node_type=NodeType.PRODUCT,
-    #     target_node_type=NodeType.PRODUCT_TYPE,
-    #     max_rows=max_rows,
-    # )
+    # product_name -> product_type_name
+    ingest_edges(
+        source_field="prod_name",
+        target_field="product_type_name",
+        edge_type=EdgeType.BELONGS_TO,
+        source_node_type=NodeType.PRODUCT,
+        target_node_type=NodeType.PRODUCT_TYPE,
+        max_rows=max_rows,
+    )
 
-    # # product -> index_group
-    # ingest_edges(
-    #     source_field="prod_name",
-    #     target_field="index_group_name",
-    #     edge_type=EdgeType.BELONGS_TO,
-    #     source_node_type=NodeType.PRODUCT,
-    #     target_node_type=NodeType.INDEX_GROUP,
-    #     max_rows=max_rows,
-    # )
+    # product -> index_group
+    ingest_edges(
+        source_field="prod_name",
+        target_field="index_group_name",
+        edge_type=EdgeType.BELONGS_TO,
+        source_node_type=NodeType.PRODUCT,
+        target_node_type=NodeType.INDEX_GROUP,
+        max_rows=max_rows,
+    )
 
-    # # article -> product
-    # ingest_edges(
-    #     source_field="article_id",
-    #     target_field="prod_name",
-    #     edge_type=EdgeType.BELONGS_TO,
-    #     source_node_type=NodeType.ARTICLE,
-    #     target_node_type=NodeType.PRODUCT,
-    #     max_rows=max_rows,
-    # )
+    # article -> product
+    ingest_edges(
+        source_field="article_id",
+        target_field="prod_name",
+        edge_type=EdgeType.BELONGS_TO,
+        source_node_type=NodeType.ARTICLE,
+        target_node_type=NodeType.PRODUCT,
+        max_rows=max_rows,
+    )
 
-    # # article -> colour
-    # ingest_edges(
-    #     source_field="article_id",
-    #     target_field="colour_group_name",
-    #     edge_type=EdgeType.BELONGS_TO,
-    #     source_node_type=NodeType.ARTICLE,
-    #     target_node_type=NodeType.COLOUR_GROUP,
-    #     max_rows=max_rows,
-    # )
+    # article -> colour
+    ingest_edges(
+        source_field="article_id",
+        target_field="colour_group_name",
+        edge_type=EdgeType.BELONGS_TO,
+        source_node_type=NodeType.ARTICLE,
+        target_node_type=NodeType.COLOUR_GROUP,
+        max_rows=max_rows,
+    )
 
     # customer -> article (transactions with price)
     ingest_edges(

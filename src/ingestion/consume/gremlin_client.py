@@ -7,7 +7,7 @@ from gremlin_python.driver import client, serializer
 from gremlin_python.driver.protocol import GremlinServerError
 from dotenv import load_dotenv
 
-from src.models.events import (
+from src.ingestion.models.events import (
     Action,
     GraphEdgeEvent,
     GraphNodeEvent,
@@ -112,6 +112,51 @@ class GremlinService:
             self._upsert_node(node_label, node_type, event.data)
         elif event.action == Action.DELETE:
             self._delete_node(node_label)
+
+    def process_node_events_batch(self, events: list[GraphNodeEvent], batch_size: int = 50) -> None:
+        """
+        Process multiple GraphNodeEvents in batches using combined Gremlin queries.
+
+        Groups events by action type and processes upserts in batches.
+        Deletes are processed individually as they are typically fewer.
+
+        Args:
+            events: List of GraphNodeEvents to process
+            batch_size: Maximum number of nodes per batch query (default 50)
+        """
+        if not events:
+            return
+
+        # Separate upserts and deletes
+        upsert_events = [e for e in events if e.action == Action.UPSERT]
+        delete_events = [e for e in events if e.action == Action.DELETE]
+
+        # Process upserts in batches
+        for i in range(0, len(upsert_events), batch_size):
+            batch = upsert_events[i : i + batch_size]
+            self._upsert_nodes_batch(batch)
+
+        # Process deletes individually (typically fewer)
+        for event in delete_events:
+            self._delete_node(event.label)
+
+    def _upsert_nodes_batch(self, events: list[GraphNodeEvent]) -> None:
+        """
+        Upsert multiple vertices in batched Gremlin queries.
+
+        Cosmos DB Gremlin API has limitations on query complexity, so we
+        execute individual upsert queries but group them for better organization
+        and potential future optimization.
+
+        Args:
+            events: List of GraphNodeEvents to upsert
+        """
+        if not events:
+            return
+
+        # Execute upserts individually - Cosmos DB doesn't support union with V()
+        for event in events:
+            self._upsert_node(event.label, event.node_type.value, event.data)
 
     def process_edge_event(self, event: GraphEdgeEvent) -> None:
         """

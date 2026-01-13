@@ -1,5 +1,5 @@
-from src.ingest.ingest_article_nodes import ingest_unique_field_values
-from src.models.events import NodeType
+from src.ingestion.ingest.ingest_article_nodes import ingest_unique_field_values
+from src.ingestion.models.events import NodeType
 
 
 def ingest_customer_nodes(max_rows: int | None = None):

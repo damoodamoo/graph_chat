@@ -73,19 +73,9 @@ tasks:
   ingest:all:
     desc: Ingest data from articles.csv to Event Hub (use MAX_ROWS=N to limit rows)
     cmds:
-      - uv run python -m src.ingest.ingest {{if .MAX_ROWS}}--max-rows {{.MAX_ROWS}}{{end}}
+      - uv run python -m src.ingestion.ingest.ingest {{if .MAX_ROWS}}--max-rows {{.MAX_ROWS}}{{end}}
 
   consume:all:
     desc: Run the Event Hub consumer to process events into Cosmos DB
     cmds:
-      - uv run python -m src.consume.consume
-
-  consume:clear:
-    desc: Skip all existing events (sets checkpoints to latest position)
-    cmds:
-      - uv run python -m src.consume.clear_events
-
-  consume:reset:
-    desc: Reset checkpoints so consumer reads from the beginning
-    cmds:
-      - uv run python -m src.consume.clear_events --reset
+      - uv run python -m src.ingestion.consume.consume
