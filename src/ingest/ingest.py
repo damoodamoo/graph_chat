@@ -1,6 +1,7 @@
 import argparse
 
 from src.ingest.ingest_article_nodes import ingest_article_nodes
+from src.ingest.ingest_customer_nodes import ingest_customer_nodes
 from src.ingest.ingest_edges import ingest_all_edges
 
 
@@ -19,12 +20,14 @@ if __name__ == "__main__":
 
     # nodes without edges
     ingest_article_nodes(max_rows=args.max_rows)
+    ingest_customer_nodes(max_rows=args.max_rows)
 
     # ingest edge events. connect:
     # product_type_name -> product_group_name
     # product_name -> product_type_name
     # product -> index_group
     # article -> product
+    # customer -> article
     ingest_all_edges(max_rows=args.max_rows)
 
 
