@@ -30,7 +30,7 @@ variable "cosmos_consistency_level" {
 variable "cosmos_throughput" {
   description = "The throughput for the Cosmos DB Gremlin database"
   type        = number
-  default     = 1000
+  default     = 10000
 }
 
 variable "eventhub_sku" {

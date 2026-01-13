@@ -28,6 +28,7 @@ class GraphNodeEvent(BaseModel):
     action: Action = Field(..., description="Action to perform on the node")
     label: str = Field(..., description="Unique label")
 
+
 class EdgeType(str, Enum):
     PURCHASED = "purchased"
     BELONGS_TO = "belongs_to"

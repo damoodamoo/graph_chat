@@ -1,4 +1,6 @@
 import os
+import random
+import time
 
 from azure.identity import DefaultAzureCredential
 from gremlin_python.driver import client, serializer
@@ -14,6 +16,11 @@ from src.models.events import (
 
 class GremlinService:
     """Service class for executing Gremlin queries against Cosmos DB."""
+
+    # Retry configuration
+    MAX_RETRIES = 5
+    BASE_DELAY_SECONDS = 1.0
+    MAX_DELAY_SECONDS = 32.0
 
     def __init__(self, env_file: str = "app.env"):
         load_dotenv(env_file)
@@ -53,18 +60,43 @@ class GremlinService:
         """
         Execute a Gremlin query and return results.
 
+        Implements exponential backoff retry for 429 (rate limit) errors.
+
         Args:
             query: Gremlin query string
 
         Returns:
             List of query results
         """
-        try:
-            result_set = self.gremlin_client.submit(query)
-            return result_set.all().result()
-        except GremlinServerError as e:
-            print(f"Gremlin error executing query: {e}")
-            raise
+        last_exception = None
+
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                result_set = self.gremlin_client.submit(query)
+                return result_set.all().result()
+            except GremlinServerError as e:
+                # Check if this is a 429 rate limit error
+                if "429" in str(e) or "RequestRateTooLarge" in str(e):
+                    last_exception = e
+                    if attempt < self.MAX_RETRIES - 1:
+                        # Calculate delay with exponential backoff and jitter
+                        delay = min(
+                            self.BASE_DELAY_SECONDS * (2 ** attempt) + random.uniform(0, 1),
+                            self.MAX_DELAY_SECONDS,
+                        )
+                        print(
+                            f"Rate limited (429), retrying in {delay:.2f}s "
+                            f"(attempt {attempt + 1}/{self.MAX_RETRIES})"
+                        )
+                        time.sleep(delay)
+                        continue
+                # Not a 429 or out of retries, re-raise
+                print(f"Gremlin error executing query: {e}")
+                raise
+
+        # If we exhausted all retries
+        print(f"Failed after {self.MAX_RETRIES} retries due to rate limiting")
+        raise last_exception
 
     def process_node_event(self, event: GraphNodeEvent) -> None:
         """

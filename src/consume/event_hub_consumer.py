@@ -177,7 +177,32 @@ class EventHubConsumerService:
         else:
             print(f"Error in consumer: {error}")
 
-    def start_consuming(self, starting_position: str = "-1") -> None:
+    def _get_starting_positions_from_checkpoints(self) -> dict[str, str] | None:
+        """
+        Get starting positions for each partition from checkpoint files.
+
+        Returns:
+            Dict mapping partition_id to offset, or None if no checkpoints exist.
+        """
+        partition_ids = self.consumer.get_partition_ids()
+        starting_positions = {}
+        
+        for partition_id in partition_ids:
+            checkpoint = self._checkpoint_store.get_checkpoint(
+                fully_qualified_namespace=self.fully_qualified_namespace,
+                eventhub_name=self.eventhub_name,
+                consumer_group=self.consumer_group,
+                partition_id=partition_id,
+            )
+            if checkpoint and "offset" in checkpoint:
+                starting_positions[partition_id] = checkpoint["offset"]
+                print(f"Resuming partition {partition_id} from offset {checkpoint['offset']} (seq: {checkpoint.get('sequence_number', 'unknown')})")
+        
+        if starting_positions:
+            return starting_positions
+        return None
+
+    def start_consuming(self, starting_position: str = "-1", resume_from_checkpoint: bool = True) -> None:
         """
         Start consuming events from Event Hub.
 
@@ -186,20 +211,33 @@ class EventHubConsumerService:
         Args:
             starting_position: Position to start consuming from.
                               "-1" means from the beginning, "@latest" from new events.
+            resume_from_checkpoint: If True, attempt to resume from saved checkpoints.
+                                   Falls back to starting_position if no checkpoints exist.
         """
         print(f"Starting to consume events from {self.eventhub_name}...")
+
+        # Try to resume from checkpoints if enabled
+        position = starting_position
+        if resume_from_checkpoint:
+            checkpoint_positions = self._get_starting_positions_from_checkpoints()
+            if checkpoint_positions:
+                print(f"Resuming from checkpoints for {len(checkpoint_positions)} partition(s)")
+                position = checkpoint_positions
+            else:
+                print(f"No checkpoints found, starting from position: {starting_position}")
 
         self.consumer.receive(
             on_event=self._process_event,
             on_error=self._on_error,
-            starting_position=starting_position,
+            starting_position=position,
         )
 
     def receive_batch(
         self,
-        max_batch_size: int = 1000,
+        max_batch_size: int = 10000,
         max_wait_time: float = 5.0,
         starting_position: str = "-1",
+        resume_from_checkpoint: bool = True,
     ) -> None:
         """
         Receive events in batches from Event Hub.
@@ -208,6 +246,8 @@ class EventHubConsumerService:
             max_batch_size: Maximum number of events per batch
             max_wait_time: Maximum time to wait for events in seconds
             starting_position: Position to start consuming from
+            resume_from_checkpoint: If True, attempt to resume from saved checkpoints.
+                                   Falls back to starting_position if no checkpoints exist.
         """
 
         def on_event_batch(partition_context, events):
@@ -232,12 +272,22 @@ class EventHubConsumerService:
 
         print(f"Starting batch consumption from {self.eventhub_name}...")
 
+        # Try to resume from checkpoints if enabled
+        position = starting_position
+        if resume_from_checkpoint:
+            checkpoint_positions = self._get_starting_positions_from_checkpoints()
+            if checkpoint_positions:
+                print(f"Resuming from checkpoints for {len(checkpoint_positions)} partition(s)")
+                position = checkpoint_positions
+            else:
+                print(f"No checkpoints found, starting from position: {starting_position}")
+
         self.consumer.receive_batch(
             on_event_batch=on_event_batch,
             on_error=self._on_error,
             max_batch_size=max_batch_size,
             max_wait_time=max_wait_time,
-            starting_position=starting_position,
+            starting_position=position,
         )
 
     def close(self) -> None:

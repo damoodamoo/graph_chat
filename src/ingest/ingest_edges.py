@@ -36,46 +36,63 @@ def ingest_edges(
         batch_size: Number of events to send per batch
         max_rows: Maximum number of rows to read from CSV (default: None = all rows)
     """
-    df = CsvLoader.load(csv_path, max_rows=max_rows)
-
-    # Determine columns to consider
     all_fields = [source_field, target_field] + (data_fields or [])
+    seen_pairs: set[tuple[str, str]] = set()
+    total_events_sent = 0
+    rows_processed = 0
 
-    # Get unique source->target pairs, excluding rows with NaN in source or target
-    unique_pairs = df[df[source_field].notna() & df[target_field].notna()][all_fields].drop_duplicates(
-        subset=[source_field, target_field]
-    )
+    print(f"Starting chunked ingestion of {csv_path}...")
 
-    print(f"Found {len(unique_pairs)} unique {source_field} -> {target_field} edges")
-
-    # Create GraphEdgeEvents for each unique pair
-    events: list[GraphEdgeEvent] = []
-    for _, row in unique_pairs.iterrows():
-        # Build data dict with additional fields
-        data = {}
-        for field in (data_fields or []):
-            data[field] = str(row[field]) if pd.notna(row[field]) else ""
-        
-        event = GraphEdgeEvent(
-            event_id=uuid4(),
-            edge_type=edge_type,
-            source_node_id=str(row[source_field]),
-            source_node_type=source_node_type,
-            target_node_id=str(row[target_field]),
-            target_node_type=target_node_type,
-            data=data,
-            action=Action.UPSERT,
-        )
-        events.append(event)
-
-    # Send events to Event Hub in batches
     with EventHubService() as event_hub:
-        for i in range(0, len(events), batch_size):
-            batch = events[i : i + batch_size]
-            event_hub.send_edge_events(batch)
-            print(f"Sent batch {i // batch_size + 1}: {len(batch)} events")
+        for chunk_num, chunk in enumerate(CsvLoader.load_chunked(csv_path, chunk_size=100000)):
+            # Check if we've hit max_rows
+            if max_rows is not None and rows_processed >= max_rows:
+                break
 
-    print(f"Successfully sent {len(events)} {source_field} -> {target_field} edge events")
+            # Limit chunk if we're close to max_rows
+            if max_rows is not None:
+                remaining = max_rows - rows_processed
+                chunk = chunk.head(remaining)
+
+            rows_processed += len(chunk)
+
+            # Filter and get unique pairs from this chunk
+            valid_rows = chunk[chunk[source_field].notna() & chunk[target_field].notna()][all_fields]
+
+            # Create events for new unique pairs only
+            events: list[GraphEdgeEvent] = []
+            for _, row in valid_rows.iterrows():
+                pair_key = (str(row[source_field]), str(row[target_field]))
+                if pair_key in seen_pairs:
+                    continue
+                seen_pairs.add(pair_key)
+
+                # Build data dict with additional fields
+                data = {}
+                for field in (data_fields or []):
+                    data[field] = str(row[field]) if pd.notna(row[field]) else ""
+
+                event = GraphEdgeEvent(
+                    event_id=uuid4(),
+                    edge_type=edge_type,
+                    source_node_id=pair_key[0],
+                    source_node_type=source_node_type,
+                    target_node_id=pair_key[1],
+                    target_node_type=target_node_type,
+                    data=data,
+                    action=Action.UPSERT,
+                )
+                events.append(event)
+
+            # Send events in batches
+            for i in range(0, len(events), batch_size):
+                batch = events[i : i + batch_size]
+                event_hub.send_edge_events(batch)
+                total_events_sent += len(batch)
+
+            print(f"Chunk {chunk_num + 1}: processed {len(chunk)} rows, sent {len(events)} new edges (total: {total_events_sent})")
+
+    print(f"Successfully sent {total_events_sent} unique {source_field} -> {target_field} edge events")
 
 
 def ingest_all_edges(max_rows: int | None = None) -> None:
@@ -86,54 +103,54 @@ def ingest_all_edges(max_rows: int | None = None) -> None:
     """
     
     # product_type_name -> product_group_name
-    ingest_edges(
-        source_field="product_type_name",
-        target_field="product_group_name",
-        edge_type=EdgeType.BELONGS_TO,
-        source_node_type=NodeType.PRODUCT_TYPE,
-        target_node_type=NodeType.PRODUCT_GROUP,
-        max_rows=max_rows,
-    )
+    # ingest_edges(
+    #     source_field="product_type_name",
+    #     target_field="product_group_name",
+    #     edge_type=EdgeType.BELONGS_TO,
+    #     source_node_type=NodeType.PRODUCT_TYPE,
+    #     target_node_type=NodeType.PRODUCT_GROUP,
+    #     max_rows=max_rows,
+    # )
 
-    # product_name -> product_type_name
-    ingest_edges(
-        source_field="prod_name",
-        target_field="product_type_name",
-        edge_type=EdgeType.BELONGS_TO,
-        source_node_type=NodeType.PRODUCT,
-        target_node_type=NodeType.PRODUCT_TYPE,
-        max_rows=max_rows,
-    )
+    # # product_name -> product_type_name
+    # ingest_edges(
+    #     source_field="prod_name",
+    #     target_field="product_type_name",
+    #     edge_type=EdgeType.BELONGS_TO,
+    #     source_node_type=NodeType.PRODUCT,
+    #     target_node_type=NodeType.PRODUCT_TYPE,
+    #     max_rows=max_rows,
+    # )
 
-    # product -> index_group
-    ingest_edges(
-        source_field="prod_name",
-        target_field="index_group_name",
-        edge_type=EdgeType.BELONGS_TO,
-        source_node_type=NodeType.PRODUCT,
-        target_node_type=NodeType.INDEX_GROUP,
-        max_rows=max_rows,
-    )
+    # # product -> index_group
+    # ingest_edges(
+    #     source_field="prod_name",
+    #     target_field="index_group_name",
+    #     edge_type=EdgeType.BELONGS_TO,
+    #     source_node_type=NodeType.PRODUCT,
+    #     target_node_type=NodeType.INDEX_GROUP,
+    #     max_rows=max_rows,
+    # )
 
-    # article -> product
-    ingest_edges(
-        source_field="article_id",
-        target_field="prod_name",
-        edge_type=EdgeType.BELONGS_TO,
-        source_node_type=NodeType.ARTICLE,
-        target_node_type=NodeType.PRODUCT,
-        max_rows=max_rows,
-    )
+    # # article -> product
+    # ingest_edges(
+    #     source_field="article_id",
+    #     target_field="prod_name",
+    #     edge_type=EdgeType.BELONGS_TO,
+    #     source_node_type=NodeType.ARTICLE,
+    #     target_node_type=NodeType.PRODUCT,
+    #     max_rows=max_rows,
+    # )
 
-    # article -> colour
-    ingest_edges(
-        source_field="article_id",
-        target_field="colour_group_name",
-        edge_type=EdgeType.BELONGS_TO,
-        source_node_type=NodeType.ARTICLE,
-        target_node_type=NodeType.COLOUR_GROUP,
-        max_rows=max_rows,
-    )
+    # # article -> colour
+    # ingest_edges(
+    #     source_field="article_id",
+    #     target_field="colour_group_name",
+    #     edge_type=EdgeType.BELONGS_TO,
+    #     source_node_type=NodeType.ARTICLE,
+    #     target_node_type=NodeType.COLOUR_GROUP,
+    #     max_rows=max_rows,
+    # )
 
     # customer -> article (transactions with price)
     ingest_edges(

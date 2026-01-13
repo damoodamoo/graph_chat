@@ -59,7 +59,7 @@ class GraphEventProcessor:
 
         try:
             # Start consuming (this is blocking)
-            self.consumer_service.receive_batch(starting_position=starting_position)
+            self.consumer_service.receive_batch(starting_position=starting_position, resume_from_checkpoint=True)
         except KeyboardInterrupt:
             print("\nReceived keyboard interrupt")
         finally:
