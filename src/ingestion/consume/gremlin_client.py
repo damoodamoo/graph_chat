@@ -1,8 +1,10 @@
 import os
 import random
 import time
+from datetime import datetime, timezone
 
 from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AccessToken
 from gremlin_python.driver import client, serializer
 from gremlin_python.driver.protocol import GremlinServerError
 from dotenv import load_dotenv
@@ -22,6 +24,9 @@ class GremlinService:
     BASE_DELAY_SECONDS = 1.0
     MAX_DELAY_SECONDS = 32.0
 
+    # Token refresh buffer - refresh token if it expires within this many seconds
+    TOKEN_REFRESH_BUFFER_SECONDS = 300  # 5 minutes
+
     def __init__(self, env_file: str = "app.env"):
         load_dotenv(env_file)
 
@@ -37,11 +42,40 @@ class GremlinService:
 
         self._client: client.Client | None = None
         self._credential = DefaultAzureCredential()
+        self._current_token: AccessToken | None = None
 
     def _get_access_token(self) -> str:
         """Get an access token for Cosmos DB Gremlin API."""
         token = self._credential.get_token("https://cosmos.azure.com/.default")
+        self._current_token = token
         return token.token
+
+    def _is_token_expired_or_expiring_soon(self) -> bool:
+        """
+        Check if the current token is expired or will expire soon.
+
+        Returns:
+            True if token is expired, expiring soon, or doesn't exist.
+        """
+        if self._current_token is None:
+            return True
+
+        current_time = datetime.now(timezone.utc).timestamp()
+        # Token expires_on is a Unix timestamp
+        time_until_expiry = self._current_token.expires_on - current_time
+
+        return time_until_expiry < self.TOKEN_REFRESH_BUFFER_SECONDS
+
+    def _refresh_client_if_needed(self) -> None:
+        """
+        Check if the token is expired or expiring soon and refresh the client if needed.
+
+        This method closes the existing client and creates a new one with a fresh token.
+        """
+        if self._is_token_expired_or_expiring_soon():
+            print("Token expired or expiring soon, refreshing...")
+            self._close_client()
+            # The next access to gremlin_client will create a new client with a fresh token
 
     @property
     def gremlin_client(self) -> client.Client:
@@ -61,6 +95,7 @@ class GremlinService:
         Execute a Gremlin query and return results.
 
         Implements exponential backoff retry for 429 (rate limit) errors.
+        Automatically refreshes the access token if it has expired or is expiring soon.
 
         Args:
             query: Gremlin query string
@@ -68,6 +103,9 @@ class GremlinService:
         Returns:
             List of query results
         """
+        # Check and refresh token before executing query
+        self._refresh_client_if_needed()
+
         last_exception = None
 
         for attempt in range(self.MAX_RETRIES):
@@ -75,8 +113,20 @@ class GremlinService:
                 result_set = self.gremlin_client.submit(query)
                 return result_set.all().result()
             except GremlinServerError as e:
+                error_str = str(e)
+
+                # Check if this is an authentication/authorization error (401/403)
+                if "401" in error_str or "Unauthorized" in error_str or "403" in error_str:
+                    print("Authentication error detected, refreshing token...")
+                    self._close_client()
+                    if attempt < self.MAX_RETRIES - 1:
+                        # Retry with a fresh token
+                        continue
+                    print(f"Authentication failed after token refresh: {e}")
+                    raise
+
                 # Check if this is a 429 rate limit error
-                if "429" in str(e) or "RequestRateTooLarge" in str(e):
+                if "429" in error_str or "RequestRateTooLarge" in error_str:
                     last_exception = e
                     if attempt < self.MAX_RETRIES - 1:
                         # Calculate delay with exponential backoff and jitter
@@ -285,11 +335,18 @@ class GremlinService:
         """Escape special characters for Gremlin query strings."""
         return value.replace("\\", "\\\\").replace("'", "\\'")
 
+    def _close_client(self) -> None:
+        """Close the Gremlin client connection without additional cleanup."""
+        if self._client is not None:
+            try:
+                self._client.close()
+            except Exception as e:
+                print(f"Warning: Error closing Gremlin client: {e}")
+            self._client = None
+
     def close(self) -> None:
         """Close the Gremlin client connection."""
-        if self._client is not None:
-            self._client.close()
-            self._client = None
+        self._close_client()
 
     def __enter__(self) -> "GremlinService":
         return self

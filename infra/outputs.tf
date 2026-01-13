@@ -59,19 +59,22 @@ output "cosmosdb_graph_name" {
   value       = azurerm_cosmosdb_gremlin_graph.user_products.name
 }
 
-# Azure OpenAI Outputs
-output "openai_endpoint" {
-  description = "The endpoint for the Azure OpenAI service"
-  value       = azurerm_cognitive_account.openai.endpoint
+# Azure AI Foundry Outputs
+output "ai_foundry_name" {
+  description = "The name of the AI Foundry account"
+  value       = azurerm_cognitive_account.ai_foundry.name
 }
 
-output "openai_primary_key" {
-  description = "The primary key for the Azure OpenAI service"
-  value       = azurerm_cognitive_account.openai.primary_access_key
-  sensitive   = true
+output "azure_ai_project_endpoint" {
+  description = "The endpoint for the AI Foundry account"
+  value       = azapi_resource.ai_foundry_project.output.properties.endpoints["AI Foundry API"]
 }
 
-output "openai_deployment_name" {
+output "azure_openai_api_version" {
+  value = var.openai_model_version
+}
+
+output "azure_ai_model_deployment_name" {
   description = "The name of the OpenAI deployment"
   value       = azurerm_cognitive_deployment.gpt.name
 }

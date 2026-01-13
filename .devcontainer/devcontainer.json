@@ -9,6 +9,13 @@
 		"ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
 		"ghcr.io/devcontainers-extra/features/go-task:1": {},
 		"ghcr.io/devcontainers-extra/features/terraform-asdf:2": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"hashicorp.terraform"
+			]
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
