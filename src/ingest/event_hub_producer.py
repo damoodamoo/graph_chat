@@ -15,7 +15,7 @@ class EventHubService:
         load_dotenv(env_file)
 
         self.namespace_name = os.getenv("EVENTHUB_NAMESPACE_NAME")
-        self.eventhub_name = os.getenv("EVENTHUB_NAME")
+        self.eventhub_name = os.getenv("EVENTHUB_NAME", "")
 
         if not self.namespace_name or not self.eventhub_name:
             raise ValueError(

@@ -4,6 +4,7 @@ app.env
 
 # data
 *.csv*
+.checkpoints/*
 
 # Terraform
 infra/.terraform/

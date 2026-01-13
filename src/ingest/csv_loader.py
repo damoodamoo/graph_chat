@@ -10,6 +10,7 @@ class CsvLoader:
     def load(
         file_path: str | Path,
         encoding: str = "utf-8",
+        max_rows: int | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -18,6 +19,7 @@ class CsvLoader:
         Args:
             file_path: Path to the CSV file
             encoding: File encoding (default: utf-8)
+            max_rows: Maximum number of rows to read (default: None = all rows)
             **kwargs: Additional arguments passed to pd.read_csv
 
         Returns:
@@ -31,7 +33,7 @@ class CsvLoader:
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {path}")
 
-        return pd.read_csv(path, encoding=encoding, **kwargs)
+        return pd.read_csv(path, encoding=encoding, nrows=max_rows, **kwargs)
 
     @staticmethod
     def load_chunked(

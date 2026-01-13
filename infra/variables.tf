@@ -30,7 +30,7 @@ variable "cosmos_consistency_level" {
 variable "cosmos_throughput" {
   description = "The throughput for the Cosmos DB Gremlin database"
   type        = number
-  default     = 400
+  default     = 1000
 }
 
 variable "eventhub_sku" {
@@ -42,7 +42,7 @@ variable "eventhub_sku" {
 variable "eventhub_capacity" {
   description = "The capacity (throughput units) for Event Hub namespace"
   type        = number
-  default     = 1
+  default     = 4
 }
 
 variable "eventhub_partition_count" {
