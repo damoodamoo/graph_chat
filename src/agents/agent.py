@@ -1,13 +1,14 @@
 import asyncio
-from functools import partial
-from agent_framework.azure import AzureOpenAIChatClient
-from azure.identity import AzureCliCredential
-from agent_framework.devui import serve
 
-from src.agents.tools.graph_tool import GraphTool
+from src.agents.user_agent import agent
 
-from dotenv import load_dotenv
+async def main():
+    t = agent.get_new_thread()
+    r = await agent.run("I love blue", thread=t)
+    r = await agent.run("I quite like red too", thread=t)
+    r = await agent.run("What did I buy?", thread=t)
+    r = await agent.run("I really like the bikini I got", thread=t)
+    r = await agent.run("actually, i don't really like red", thread=t)
 
-load_dotenv('app.env')
-
-graph_tool = GraphTool()
+if __name__ == "__main__":
+    asyncio.run(main())

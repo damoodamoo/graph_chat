@@ -88,7 +88,7 @@ tasks:
   agent:dev:
     desc: Run the agent in the DevUI
     cmds:
-      - PYTHONPATH=. uv run devui ./src/agents --port 8080
+      - PYTHONPATH=. uv run devui ./src/agents --reload --instrumentation --port 8080 --log-level INFO
 
   test:
     desc: Run pytest tests

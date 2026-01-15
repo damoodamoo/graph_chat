@@ -32,6 +32,7 @@ class GraphNodeEvent(BaseModel):
 class EdgeType(str, Enum):
     PURCHASED = "purchased"
     BELONGS_TO = "belongs_to"
+    LIKES = "likes"
 
 
 class GraphEdgeEvent(BaseModel):
