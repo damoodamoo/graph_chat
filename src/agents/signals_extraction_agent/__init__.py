@@ -1,14 +1,8 @@
 from agent_framework.azure import AzureOpenAIChatClient
 from azure.identity import AzureCliCredential
-from pydantic import BaseModel
 
+from src.agents.models.models import Preferences
 
-class Preferences(BaseModel):
-    prefs: list[Preference]
-
-class Preference(BaseModel):
-    item_type: str # colour_group or article
-    value: str # value of colour or article_id
 
 
 PREFERENCE_EXTRACTION_PROMPT = """

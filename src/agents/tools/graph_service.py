@@ -86,7 +86,3 @@ class GraphService:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
-
-    # TODO: Add methods for retrieving specific node types
-    # def get_user(self, user_id: str) -> dict[str, Any]: ...
-    # def get_product(self, product_id: str) -> dict[str, Any]: ...

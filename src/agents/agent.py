@@ -1,6 +1,9 @@
 import asyncio
+from dotenv import load_dotenv
 
+load_dotenv('app.env')
 from src.agents.user_agent import agent
+
 
 async def main():
     t = agent.get_new_thread()

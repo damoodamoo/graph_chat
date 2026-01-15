@@ -21,3 +21,12 @@ class Article(BaseModel):
     product_code: str | None = Field(None, description="Product code")
     prod_name: str | None = Field(None, description="Product name")
     detail_desc: str | None = Field(None, description="Detailed product description")
+
+
+class Preferences(BaseModel):
+    prefs: list[Preference]
+
+
+class Preference(BaseModel):
+    item_type: str # colour_group or article
+    value: str # value of colour or article_id
