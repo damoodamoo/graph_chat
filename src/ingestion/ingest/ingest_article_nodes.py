@@ -11,7 +11,7 @@ def ingest_unique_field_values(
     field_name: str,
     node_type: NodeType,
     data_fields: list[str] | None = None,
-    csv_path: str = "data/articles.csv",
+    csv_path: str = "data/articles_mini.csv",
     batch_size: int = 10000,
     max_rows: int | None = None,
 ) -> None:

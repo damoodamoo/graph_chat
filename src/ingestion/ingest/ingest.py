@@ -19,8 +19,8 @@ if __name__ == "__main__":
         print(f"Limiting ingestion to top {args.max_rows} rows from CSV files")
 
     # nodes without edges
-   # ingest_article_nodes(max_rows=args.max_rows)
-   # ingest_customer_nodes(max_rows=args.max_rows)
+    ingest_article_nodes(max_rows=args.max_rows)
+    ingest_customer_nodes(max_rows=args.max_rows)
 
     # ingest edge events. connect:
     # product_type_name -> product_group_name

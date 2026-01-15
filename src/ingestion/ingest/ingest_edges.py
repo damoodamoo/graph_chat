@@ -6,8 +6,8 @@ from src.ingestion.ingest.csv_loader import CsvLoader
 from src.ingestion.ingest.event_hub_producer import EventHubService
 from src.ingestion.models.events import Action, EdgeType, GraphEdgeEvent, NodeType
 
-ARTICLES_CSV = "data/articles.csv"
-TRANSACTIONS_CSV = "data/transactions_train.csv"
+ARTICLES_CSV = "data/articles_mini.csv"
+TRANSACTIONS_CSV = "data/transactions_train_mini.csv"
 
 
 def ingest_edges(

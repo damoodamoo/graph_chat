@@ -18,6 +18,11 @@ tasks:
       - bash ./download_data.sh
     dir: ./data
 
+  data:reduce:
+    desc: Create mini versions of CSV files (top 1000 customers and related data)
+    cmds:
+      - uv run python -m src.ingestion.ingest.reduce_csvs
+
   infra:init:
     desc: Initialize Terraform
     dir: '{{.INFRA_DIR}}'
@@ -79,3 +84,13 @@ tasks:
     desc: Run the Event Hub consumer to process events into Cosmos DB
     cmds:
       - uv run python -m src.ingestion.consume.consume
+
+  agent:dev:
+    desc: Run the agent in the DevUI
+    cmds:
+      - PYTHONPATH=. uv run devui ./src/agents --port 8080
+
+  test:
+    desc: Run pytest tests
+    cmds:
+      - uv run pytest {{.CLI_ARGS | default "tests/ -v"}}

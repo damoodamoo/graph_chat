@@ -70,8 +70,13 @@ output "azure_ai_project_endpoint" {
   value       = azapi_resource.ai_foundry_project.output.properties.endpoints["AI Foundry API"]
 }
 
-output "azure_openai_api_version" {
-  value = var.openai_model_version
+output "azure_openai_endpoint" {
+  value = "https://${azurerm_cognitive_account.ai_foundry.name}.openai.azure.com/"
+}
+
+output "azure_openai_chat_deployment_name" {
+  description = "The name of the OpenAI deployment"
+  value       = azurerm_cognitive_deployment.gpt.name
 }
 
 output "azure_ai_model_deployment_name" {

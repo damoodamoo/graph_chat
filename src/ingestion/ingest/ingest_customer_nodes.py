@@ -14,6 +14,6 @@ def ingest_customer_nodes(max_rows: int | None = None):
         field_name="customer_id",
         node_type=NodeType.USER,
         data_fields=["age", "club_member_status", "fashion_news_frequency"],
-        csv_path="data/customers.csv",
+        csv_path="data/customers_mini.csv",
         max_rows=max_rows,
     )
