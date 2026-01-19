@@ -2,6 +2,7 @@
 
 import pytest
 from src.agents.tools.graph_tool import GraphTool
+from src.config import USER_ID
 
 
 @pytest.mark.integration
@@ -20,12 +21,10 @@ class TestGraphToolIntegration:
     async def test_get_user_returns_user(self, graph_tool):
         """Test getting a user that exists in the database."""
         # Use a known customer ID from your data
-        user_id = "0000757967448a6cb83efb3ea7a3fb9d418ac7adf2379d8cd0c725276a467a2a"
-
-        result = await graph_tool.get_user(user_id)
+        result = await graph_tool.get_user(USER_ID)
 
         assert result is not None
-        assert result.customer_id == user_id
+        assert result.customer_id == USER_ID
         print(f"Found user: {result}")
 
     @pytest.mark.asyncio

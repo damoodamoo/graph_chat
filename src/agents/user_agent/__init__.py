@@ -3,10 +3,10 @@ from azure.identity import AzureCliCredential
 
 from src.agents.tools.graph_tool import GraphTool
 from src.agents.memory.preference_signals import UserPreferenceSignalsMemory
+from src.config import USER_ID
 
 graph_tool = GraphTool()
 signals_memory = UserPreferenceSignalsMemory()
-USER_ID = "0000757967448a6cb83efb3ea7a3fb9d418ac7adf2379d8cd0c725276a467a2a"
 
 
 agent = AzureOpenAIChatClient(credential=AzureCliCredential()).create_agent(

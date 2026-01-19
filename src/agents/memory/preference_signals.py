@@ -5,8 +5,8 @@ from typing import Any
 from src.agents.signals_extraction_agent import agent
 from src.agents.models.models import Preferences
 from src.agents.tools.event_hub_tool import EventHubTool
+from src.config import USER_ID
 
-USER_ID = "0000757967448a6cb83efb3ea7a3fb9d418ac7adf2379d8cd0c725276a467a2a"
 event_hub_tool = EventHubTool(customer_id=USER_ID)
 
 class UserPreferenceSignalsMemory(ContextProvider):
