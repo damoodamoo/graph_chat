@@ -33,11 +33,3 @@ class TestGraphToolIntegration:
         result = await graph_tool.get_user("nonexistent_user_12345")
 
         assert result is None
-
-
-if __name__ == "__main__":
-    # Run directly for quick testing
-    import asyncio
-    tool = GraphTool()
-    user = asyncio.run(tool.get_user("0000423b620805d70a8d24a74265e620f2daeac8b3cb5b0450e19b1896789b07"))
-    print(f"Result: {user}")
