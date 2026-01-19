@@ -94,3 +94,8 @@ tasks:
     desc: Run pytest tests
     cmds:
       - uv run pytest {{.CLI_ARGS | default "tests/ -v"}}
+
+  eval:
+    desc: Run preference signals extraction evaluation
+    cmds:
+      - uv run python tests/test_preference_signals_eval.py

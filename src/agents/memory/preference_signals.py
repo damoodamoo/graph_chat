@@ -14,7 +14,6 @@ class UserPreferenceSignalsMemory(ContextProvider):
         self._preferences = {}
         self._conversation_history: list[ChatMessage] = []  # Accumulate full history
 
-
     async def invoking(self, messages: ChatMessage | MutableSequence[ChatMessage], **kwargs: Any) -> Context:
         # not interested in pushing context into the convo at this point
         return Context()
