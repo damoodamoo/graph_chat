@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 
 
@@ -23,10 +25,10 @@ class Article(BaseModel):
     detail_desc: str | None = Field(None, description="Detailed product description")
 
 
+class Preference(BaseModel):
+    item_type: str = Field(..., description="Type of preference: colour_group or article")
+    value: str = Field(..., description="Value of colour or article_id")
+
+
 class Preferences(BaseModel):
     prefs: list[Preference]
-
-
-class Preference(BaseModel):
-    item_type: str # colour_group or article
-    value: str # value of colour or article_id
