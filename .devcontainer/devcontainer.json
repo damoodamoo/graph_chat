@@ -13,7 +13,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"hashicorp.terraform"
+				"hashicorp.terraform",
+				"hediet.vscode-drawio"
 			]
 		}
 	}

@@ -14,15 +14,13 @@ tasks:
 
   data:download:
     desc: Download the kaggle dataset
+    deps:
+      - data:init
     cmds:
       - bash ./download_data.sh
+      - cd .. && uv run python -m src.ingestion.ingest.reduce_csvs
     dir: ./data
-
-  data:reduce:
-    desc: Create mini versions of CSV files (top 1000 customers and related data)
-    cmds:
-      - uv run python -m src.ingestion.ingest.reduce_csvs
-
+    
   infra:init:
     desc: Initialize Terraform
     dir: '{{.INFRA_DIR}}'
@@ -98,4 +96,4 @@ tasks:
   eval:
     desc: Run preference signals extraction evaluation
     cmds:
-      - uv run python tests/test_preference_signals_eval.py
+      - uv run python -m tests.test_preference_signals_eval
