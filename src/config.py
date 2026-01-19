@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from app.env file if present
+# load_dotenv gracefully handles missing files (returns False without error)
 load_dotenv("app.env")
 
 # Default USER_ID for the application
