@@ -1,5 +1,5 @@
 from agent_framework.azure import AzureOpenAIChatClient
-from azure.identity import AzureCliCredential
+from azure.identity import DefaultAzureCredential
 
 from src.agents.models.models import Preferences
 
@@ -18,7 +18,7 @@ User message to analyze:
 
 
 agent = AzureOpenAIChatClient(
-    credential=AzureCliCredential()
+    credential=DefaultAzureCredential()
 ).create_agent(
     name="preference_extractor",
     instructions=PREFERENCE_EXTRACTION_PROMPT,
