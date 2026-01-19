@@ -3,14 +3,13 @@ from azure.identity import AzureCliCredential
 from pathlib import Path
 
 from src.agents.tools.graph_tool import GraphTool
+from src.config import USER_ID
 
 graph_tool = GraphTool()
 
 _schema_path = Path(__file__).parent.parent.parent.parent / "docs" / "graph-schema.md"
 with open(_schema_path, "r") as f:
     GRAPH_SCHEMA = f.read()
-
-USER_ID = "0000757967448a6cb83efb3ea7a3fb9d418ac7adf2379d8cd0c725276a467a2a"
 
 # Agent for natural language to Gremlin queries
 agent = AzureOpenAIChatClient(credential=AzureCliCredential()).create_agent(
