@@ -22,6 +22,9 @@ dependencies = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+markers = [
+    "integration: tests that require external services (CosmosDB, etc.)",
+]
 
 [dependency-groups]
 dev = [

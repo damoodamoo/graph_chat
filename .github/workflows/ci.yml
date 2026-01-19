@@ -24,10 +24,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
       
-      - name: Run unit tests
-        run: uv run pytest tests/test_graph_tool.py -v
+      - name: Run unit tests (skip integration tests requiring CosmosDB)
+        run: uv run pytest tests/ -v -m "not integration" --ignore=tests/test_preference_signals_eval.py
       
-      - name: Run evaluation tests
+      - name: Run AI evaluation tests
         env:
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           AZURE_OPENAI_CHAT_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT_NAME }}

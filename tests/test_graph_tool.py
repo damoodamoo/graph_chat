@@ -4,8 +4,13 @@ import pytest
 from src.agents.tools.graph_tool import GraphTool
 
 
+@pytest.mark.integration
 class TestGraphToolIntegration:
-    """Integration tests that call real Cosmos DB."""
+    """Integration tests that call real Cosmos DB.
+    
+    These tests require CosmosDB credentials and are skipped in CI.
+    Run locally with: pytest tests/test_graph_tool.py -v -m integration
+    """
 
     @pytest.fixture
     def graph_tool(self):
