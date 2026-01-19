@@ -26,8 +26,8 @@ class Article(BaseModel):
 
 
 class Preference(BaseModel):
-    item_type: str # colour_group or article
-    value: str # value of colour or article_id
+    item_type: str = Field(..., description="Type of preference: colour_group or article")
+    value: str = Field(..., description="Value of colour or article_id")
 
 
 class Preferences(BaseModel):
