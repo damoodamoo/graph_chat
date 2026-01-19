@@ -3,8 +3,8 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file if present
-load_dotenv()
+# Load environment variables from app.env file if present
+load_dotenv("app.env")
 
 # Default USER_ID for the application
 DEFAULT_USER_ID = "0000757967448a6cb83efb3ea7a3fb9d418ac7adf2379d8cd0c725276a467a2a"
