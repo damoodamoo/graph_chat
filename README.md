@@ -22,6 +22,9 @@ It makes use of the anonymised H&M dataset, available on Kaggle.
 ## High Level Architecture
 ![Architecture](./docs/media/arch.drawio.png)
 
+## Graph Structure
+![Graph](./docs/media/graph.drawio.png)
+
 ## Usage
 In the super handy Dev UI extension for Agent Framework:
 
@@ -60,8 +63,11 @@ In the super handy Dev UI extension for Agent Framework:
     ```
 
 4. **Configure environment variables**
-    - Create a `.env` file in the project root
-    - Add required configuration (see `.env.example` if available)
+    - Create a `.env` file in the project root:
+    
+    ```
+    cp .env.sample .env
+    ```
 
 5. **Deploy infrastructure**
     ```bash
@@ -71,20 +77,22 @@ In the super handy Dev UI extension for Agent Framework:
     Deploying the infra creates the `app.env` file that the ingestion and chat agents need.
 
 6. **Download and reduce the source data from Kaggle**
-    - Get a Kaggle API key and set it in .env
+    - Get your Kaggle API key and set it in .env
+
+    - Download the dataset
     ```bash
     task data:download
     ```
 
-    Now you have the full and reduced dataset downloaded.
+    Now you have the full (and reduced) dataset downloaded.
 
 7. **Run the 'ingest' and 'consume' flows** to populate the graph.
-    In one terminal session, start the consumer: 
+    In one terminal session, start the consumer...
     ```bash
     task consume:all
     ```
 
-    In another session, start the ingest (producer):
+    ...and in another session, start the ingest (producer):
     ```bash
     task ingest:all
     ```
@@ -97,12 +105,12 @@ In the super handy Dev UI extension for Agent Framework:
     ...ask it some stuff.
 
 9. **Run the evals**
-    Currently there is one set of evals for preference extraction.
+    Currently there is an initial set of evals for preference extraction.
     ```
     task eval
     ```
 
-    Other unit / integration tests are under `task test`.
+    Other unit / integration tests are run via `task test`.
 
 ---
 
